@@ -9,12 +9,14 @@
     html, body {
         margin: 0;
         padding: 0;
-    }
-
-    body {
-        background: #050509;      /* solid dark, no flash */
+        background: transparent;
         color: #fff;
         font-variant-caps: all-petite-caps;
+    }
+
+    /* Hide everything until Notion finishes applying dark mode */
+    body {
+        display: none;
     }
 
     .container {
@@ -31,6 +33,7 @@
         box-shadow: 2px 2px 1px #fff;
         text-align: center;
         max-width: 95%;
+        background: transparent;
     }
 
     .greet {
@@ -74,6 +77,11 @@
 </div>
 
 <script>
+    /* Delay rendering so Notion can apply dark mode first */
+    setTimeout(() => {
+        document.body.style.display = "block";
+    }, 150);
+
     function updateGreeting(now) {
         const hrs = now.getHours();
         let greet;
