@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Widget</title>
-
 <style>
     html, body {
         margin: 0;
@@ -13,19 +12,18 @@
         color: #fff;
         font-variant-caps: all-petite-caps;
     }
-
-    /* Hide everything until Notion finishes applying dark mode */
     body {
-        display: none;
+        visibility: hidden; /* use visibility instead of display:none */
     }
-
+    body.ready {
+        visibility: visible;
+    }
     .container {
         display: flex;
         justify-content: center;
         align-items: center;
         padding: 20px;
     }
-
     .widget {
         padding: 20px;
         border: 3px solid #fff;
@@ -35,37 +33,30 @@
         max-width: 95%;
         background: transparent;
     }
-
     .greet {
         font-size: 3em;
         margin-bottom: 10px;
     }
-
     .date,
     .clock {
         font-family: monospace;
         font-size: 2em;
     }
-
     .clock .time {
         display: inline-block;
         min-width: 24px;
     }
-
     .colon {
         display: inline-block;
         padding: 0 4px;
     }
 </style>
 </head>
-
 <body>
-
 <div class="container">
     <div class="widget">
         <div class="greet" id="greet"></div>
         <div class="date" id="date"></div>
-
         <div class="clock">
             <span class="time" id="hour"></span>
             <span class="colon">:</span>
@@ -75,44 +66,50 @@
         </div>
     </div>
 </div>
-
 <script>
-    /* Delay rendering so Notion can apply dark mode first */
-    setTimeout(() => {
-        document.body.style.display = "block";
-    }, 150);
+    function revealWhenReady() {
+        // Notion signals dark mode via a class or color-scheme on <html> or a parent frame
+        // We watch for any attribute/class change on <html> and reveal shortly after
+        const observer = new MutationObserver(() => {
+            document.body.classList.add("ready");
+            observer.disconnect();
+        });
+
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["class", "style", "data-color-scheme"],
+        });
+
+        // Fallback: if Notion never fires a mutation (e.g. light mode, no change needed),
+        // reveal after 800ms anyway
+        setTimeout(() => {
+            document.body.classList.add("ready");
+            observer.disconnect();
+        }, 800);
+    }
+
+    revealWhenReady();
 
     function updateGreeting(now) {
         const hrs = now.getHours();
         let greet;
-
         if (hrs < 12) greet = "Morning Darling";
         else if (hrs < 17) greet = "Afternoon Darling";
         else greet = "Evening Darling";
-
         document.getElementById("greet").textContent = greet;
     }
 
     function updateDate(now) {
         const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
         const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-
-        const formatted =
+        document.getElementById("date").textContent =
             `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()} ${now.getFullYear()}`;
-
-        document.getElementById("date").textContent = formatted;
     }
 
     function updateClock(now) {
-        const hour = format12(now.getHours());
-        const min = pad(now.getMinutes());
-        let sec = pad(now.getSeconds());
-
-        sec += now.getHours() >= 12 ? " pm" : " am";
-
-        document.getElementById("hour").textContent = hour;
-        document.getElementById("min").textContent = min;
-        document.getElementById("sec").textContent = sec;
+        document.getElementById("hour").textContent = format12(now.getHours());
+        document.getElementById("min").textContent = pad(now.getMinutes());
+        document.getElementById("sec").textContent = pad(now.getSeconds()) + (now.getHours() >= 12 ? " pm" : " am");
     }
 
     function format12(h) {
@@ -121,9 +118,7 @@
         return h;
     }
 
-    function pad(n) {
-        return n < 10 ? "0" + n : n;
-    }
+    function pad(n) { return n < 10 ? "0" + n : n; }
 
     function updateWidget() {
         const now = new Date();
@@ -135,6 +130,5 @@
 
     updateWidget();
 </script>
-
 </body>
 </html>
